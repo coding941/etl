@@ -1,0 +1,142 @@
+<project name="etl" default="dist" basedir=".">
+
+    <property name="src.main.java" location="src" />
+    <property name="lib" location="lib" />
+    <property name="build" location="bin" />
+    <property name="dist" location="dist" />
+    <property name="distlib" location="${dist}/lib" />
+
+    <property name="jarName" value="etl" />
+
+    <path id="classpath">
+        <fileset dir="${lib}">
+            <include name="**/*.jar" />
+        </fileset>
+    </path>
+
+
+
+    <pathconvert property="jars.project" pathsep=" ">
+
+        <map from="${basedir}/" to=""/>
+        <path>
+            <!-- lib.home contains all jar files, in several subdirectories -->
+            <fileset dir="${lib}">
+                <include name="**/*.jar" />
+            </fileset>
+        </path>
+
+    </pathconvert>
+	<!--
+	    <target name="init">
+	        <tstamp />
+	        <mkdir dir="${build}" />
+	    </target>
+		 -->
+    <target name="compile" depends="clean" description="compile the source ">
+    	<mkdir dir="${build}" />
+    	<javac srcdir="${src.main.java}" destdir="${build}" encoding="UTF-8">
+            <classpath refid="classpath" />
+        </javac>
+    	<copy todir="${build}" preservelastmodified="true">
+            <fileset dir="${src.main.java}">
+            	<include name="*.properties"/>
+            	<include name="*.xml"/>
+            </fileset>
+        </copy>
+    </target>
+
+    <target name="dist" depends="compile" description="generate the distribution">
+        <mkdir dir="${dist}" />
+        <mkdir dir="${distlib}" />
+        <copy todir="${distlib}" preservelastmodified="true">
+            <fileset dir="${lib}">
+            </fileset>
+        </copy>
+        <manifestclasspath property="jar.classpath" jarfile="${dist}/${jarName}.jar">
+            <classpath>
+                <fileset dir="${distlib}">
+                    <include name="**/*.jar" />
+                </fileset>
+            </classpath>
+        </manifestclasspath>
+        <manifest file="${build}/MANIFEST.MF">
+            <attribute name="Main-Class" value="com.hisense.etl.Main" />
+
+            <attribute name="Class-Path" value="${jars.project}" />
+        </manifest>
+        <jar jarfile="${dist}/${jarName}.jar" basedir="${build}" manifest="${build}/MANIFEST.MF">
+             <exclude name="MANIFEST.MF"/>
+        </jar>
+    </target>
+
+
+    <target name="compile_out" depends="clean" description="compile the source with *.properties outside">
+        <mkdir dir="${build}" />
+        <javac srcdir="${src.main.java}" destdir="${build}" encoding="UTF-8">
+            <classpath refid="classpath" />
+        </javac>
+        <copy todir="${build}" preservelastmodified="true">
+            <fileset dir="${src.main.java}">
+                <include name="*.xml"/>
+                <exclude name="app.properties"/>
+            </fileset>
+        </copy>
+    </target>
+
+    <target name="dist_out" depends="compile_out" description="generate the distribution with app.properties outside">
+        <mkdir dir="${dist}" />
+        <mkdir dir="${distlib}" />
+        <copy todir="${dist}" preservelastmodified="true">
+            <fileset dir="${src.main.java}">
+                <include name="app.properties"/>
+            </fileset>
+        </copy>
+        <copy todir="${distlib}" preservelastmodified="true">
+            <fileset dir="${lib}">
+            </fileset>
+        </copy>
+        <manifestclasspath property="jar.classpath" jarfile="${dist}/${jarName}_mt.jar">
+            <classpath>
+                <fileset dir="${distlib}">
+                    <include name="**/*.jar" />
+                </fileset>
+            </classpath>
+        </manifestclasspath>
+        <manifest file="${build}/MANIFEST.MF">
+            <attribute name="Main-Class" value="com.hisense.etl.Main" />
+
+            <attribute name="Class-Path" value="${jars.project}" />
+        </manifest>
+        <jar jarfile="${dist}/${jarName}_mt.jar" basedir="${build}" manifest="${build}/MANIFEST.MF">
+            <exclude name="MANIFEST.MF"/>
+        </jar>
+
+        <manifest file="${build}/MANIFEST.MF">
+            <attribute name="Main-Class" value="com.hisense.etl.service.singlethread.BaseService" />
+
+            <attribute name="Class-Path" value="${jars.project}" />
+        </manifest>
+        <jar jarfile="${dist}/${jarName}_st.jar" basedir="${build}" manifest="${build}/MANIFEST.MF">
+            <exclude name="MANIFEST.MF"/>
+        </jar>
+    </target>
+    <!--
+    <target name="create_doc" depends="dist">
+        <mkdir dir="${javadoc_dist}" />
+        <javadoc destdir="${javadoc_dist}" encoding="UTF-8" docencoding="UTF-8">
+            <fileset dir="${src.main.java}" defaultexcludes="true">
+                <include name="com/hisense/pa/Main.java" />
+            </fileset>
+            <classpath refid="classpath" />
+            <link href="http://java.sun.com/j2se/1.6.0/docs/api/" />
+            <link href="http://docs.oracle.com/javaee/5/api/" />
+            <bottom>
+                <![CDATA[<i>Copyright &#169; 2012 Hisense Corp. All Rights Reserved.</i>]]></bottom>
+        </javadoc>
+    </target>
+    -->
+<target name="clean" description="clean up">
+    <delete dir="${dist}" />
+</target>
+</project>
